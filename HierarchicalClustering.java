@@ -51,15 +51,27 @@ public class HierarchicalClustering {
         }
     }
 
+    // TODO
     // Updating distances after merging two clusters
     private void updateDistances(Pair clusterIds){
         int cl1 = clusterIds.getNum1();
         int cl2 = clusterIds.getNum2();
     }
-
+    // TODO
     private Pair findClosestClusters(){
         int cl1, cl2;
-        int minDist = distances[][];
+        int minDist = distances[0][1];
+        cl1 = 0;
+        cl2 = 1;
+        for(int i = 0; i < clusters.size(); i++){
+            for(int j = i + 1; j < clusters.size(); j++){
+                if(distances[i][j] < minDist){
+                    minDist = distances[i][j];
+                    cl1 = i;
+                    cl2 = j;
+                }
+            }
+        }
 
         return new Pair(cl1, cl2);
     }
