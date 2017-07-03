@@ -6,4 +6,12 @@ import java.util.ArrayList;
 public class Cluster {
     ArrayList<Integer> members;
 
+    public Cluster(){
+        members = new ArrayList<Integer>();
+    }
+
+    public Cluster(int member){
+        members = new ArrayList<Integer>();
+        members.add(member);
+    }
 }
