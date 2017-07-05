@@ -57,7 +57,9 @@ public class HierarchicalClustering {
         int cl1 = clusterIds.getNum1();
         int cl2 = clusterIds.getNum2();
     }
+
     // TODO
+    // Use sets
     private Pair findClosestClusters(){
         int cl1, cl2;
         int minDist = distances[0][1];
@@ -74,5 +76,10 @@ public class HierarchicalClustering {
         }
 
         return new Pair(cl1, cl2);
+    }
+
+    // TODO
+    public void mergeClusters(Pair clusterIds){
+
     }
 }
