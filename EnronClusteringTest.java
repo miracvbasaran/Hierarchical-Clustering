@@ -27,6 +27,7 @@ public class EnronClusteringTest {
 
         byte[][] features = new byte[subsetSampleSize][numFeatures];
 
+        System.out.println("Started reading from file.");
         while((line = reader.readLine()) != null && lineNo < subsetSampleEndingIndex){
             if(lineNo >= subsetSampleStartingIndex){
                 int index = 0;
@@ -42,11 +43,13 @@ public class EnronClusteringTest {
         }
 
         reader.close();
-
+        System.out.println("Finished reading from file.");
 
         // Running the clustering Algorithm with *some* parameters
-        HierarchicalClustering clusterer = new HierarchicalClustering(features, 300, 10);
+        System.out.println("Started clustering.");
+        HierarchicalClustering clusterer = new HierarchicalClustering(features, 100, 10);
         clusterer.runClustering();
+        System.out.println("Finished clustering.");
 
 
         // Running tests on the clusters
@@ -62,7 +65,7 @@ public class EnronClusteringTest {
                     System.out.println("Members of this cluster: ");
                     for(int j = 0; j < memberSize; j++){
                         int memberNo = clusters.get(i).getMembers().get(j);
-                        int memberDocSize = clusters.get(i).getMemberDocSizes().get(j);
+                        int memberDocSize = Features.docSizes[memberNo];
                         System.out.print("\t");
                         System.out.println(i + ") Sample No: " + memberNo + " --> Doc Size: " + memberDocSize +
                                 " Overhead: " + (unionSize - memberDocSize) + " Overhead Percantage: " +

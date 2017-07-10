@@ -32,6 +32,7 @@ public class HierarchicalClustering {
             Pair closestDistancePair = findClosestClusters();
             if(closestDistancePair != null){
                 updateDistances(closestDistancePair);
+                System.out.println("Merging clusters " + closestDistancePair.getNum1() + " and " + closestDistancePair.getNum2() + ".");
             }
             else{
                 break;
@@ -42,6 +43,7 @@ public class HierarchicalClustering {
     // Calculating initial distances between samples/clusters,
     // as well as creating the initial clusters
     private void calculateInitialDistances(){
+        System.out.println("Calculating initial distances.");
         for(int i = 0; i < numSamples; i++){
             Clusters.getClusters().add(new Cluster(i));
 
@@ -60,6 +62,7 @@ public class HierarchicalClustering {
                 }
             }
         }
+        System.out.println("Done calculating initial distances.");
     }
 
     // Updating distances after merging two clusters
@@ -94,14 +97,16 @@ public class HierarchicalClustering {
     private Pair findClosestClusters(){
         int cl1, cl2;
         int minDist = distances[0][1];
+        int minDistComplement = distances[1][0];
         cl1 = 0;
         cl2 = 1;
         for(int i = 0; i < Clusters.getClusters().size(); i++){
             if(!Clusters.getInvalidIds().contains(new Integer(i))){
                 for(int j = 0; j < Clusters.getClusters().size(); j++){
                     if(!Clusters.getInvalidIds().contains(new Integer(j))){
-                        if(distances[i][j] < minDist){
+                        if(i != j && distances[i][j] < minDist){
                             minDist = distances[i][j];
+                            minDistComplement = distances[j][i];
                             cl1 = i;
                             cl2 = j;
                         }
@@ -110,11 +115,16 @@ public class HierarchicalClustering {
             }
         }
 
-        if(maxOverHead < minDist){
+        if(maxOverHead < minDist &&  maxOverHead < minDistComplement){
             return null;
         }
         else{
-            return new Pair(cl1, cl2);
+            if(cl1 < cl2){
+                return new Pair(cl1, cl2);
+            }
+            else{
+                return new Pair(cl2, cl1);
+            }
         }
     }
 

@@ -5,21 +5,18 @@ import java.util.ArrayList;
  */
 public class Cluster {
     ArrayList<Integer> members;
-    ArrayList<Integer> memberDocSizes;
     private int memberSize;
     private int unionSize;
     private byte[] union;
 
     public Cluster(){
         members = new ArrayList<Integer>();
-        memberDocSizes = new ArrayList<Integer>();
         memberSize = 0;
         unionSize = 0;
     }
 
     public Cluster(int member){
         members = new ArrayList<Integer>();
-        memberDocSizes = new ArrayList<Integer>();
         members.add(member);
         unionSize = 0;
         memberSize = 1;
@@ -29,7 +26,7 @@ public class Cluster {
                 unionSize++;
             }
         }
-        memberDocSizes.add(unionSize);
+        Features.docSizes[member] = unionSize;
     }
 
     public int addMember(int member){
@@ -47,7 +44,6 @@ public class Cluster {
         unionSize += diff;
         for(int i = 0; i < Clusters.getClusters().get(member).getMemberSize(); i++){
             memberSize++;
-            memberDocSizes.add(Clusters.getClusters().get(member).getMemberDocSizes().get(i));
         }
         return diff;
     }
@@ -56,10 +52,6 @@ public class Cluster {
     // TODO: Not sure if necessary though
     public void removeMember(int member){
         members.remove(member);
-    }
-
-    public void setMemberDocSizes(ArrayList<Integer> memberDocSizes) {
-        this.memberDocSizes = memberDocSizes;
     }
 
     public void setUnionSize(int unionSize) {
@@ -90,9 +82,6 @@ public class Cluster {
         return memberSize;
     }
 
-    public ArrayList<Integer> getMemberDocSizes() {
-        return memberDocSizes;
-    }
 
     public int getUnionSize() {
         return unionSize;
