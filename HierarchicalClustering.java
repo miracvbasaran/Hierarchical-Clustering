@@ -44,16 +44,20 @@ public class HierarchicalClustering {
     private void calculateInitialDistances(){
         for(int i = 0; i < numSamples; i++){
             Clusters.getClusters().add(new Cluster(i));
-            distances[i][i] = 0;
-            for(int j = i + 1; j < numSamples; j++){
-                int dist = 0;
-                for(int k = 0; k < numFeatures; k++){
-                    if(Features.getFeatures()[i][k] != Features.getFeatures()[j][k]){
-                        dist++;
-                    }
+
+            for(int j = 0; j < numSamples; j++){
+                if(i == j){
+                    distances[i][i] = 0;
                 }
-                distances[i][j] = dist;
-                distances[j][i] = dist;
+                else{
+                    int dist = 0;
+                    for(int k = 0; k < numFeatures; k++){
+                        if(Features.getFeatures()[i][k] == 0 && Features.getFeatures()[j][k] == 1){
+                            dist++;
+                        }
+                    }
+                    distances[i][j] = dist;
+                }
             }
         }
     }
@@ -67,14 +71,18 @@ public class HierarchicalClustering {
 
         for(int i = 0; i < Clusters.getClusters().size(); i++){
             if(!Clusters.getInvalidIds().contains(new Integer(i))){
-                int dist = 0;
+                int distCl1ToI = 0;
+                int distIToCl1 = 0;
                 for(int k = 0; k < numFeatures; k++){
-                    if(Clusters.getClusters().get(cl1).getUnion()[k] != Clusters.getClusters().get(i).getUnion()[k]){
-                        dist++;
+                    if(Clusters.getClusters().get(cl1).getUnion()[k] == 0 && Clusters.getClusters().get(i).getUnion()[k] == 1){
+                        distCl1ToI++;
+                    }
+                    else if(Clusters.getClusters().get(cl1).getUnion()[k] == 1 && Clusters.getClusters().get(i).getUnion()[k] == 0){
+                        distIToCl1++;
                     }
                 }
-                distances[cl1][i] = dist;
-                distances[i][cl1] = dist;
+                distances[cl1][i] = distCl1ToI;
+                distances[i][cl1] = distIToCl1;
             }
         }
 
@@ -90,7 +98,7 @@ public class HierarchicalClustering {
         cl2 = 1;
         for(int i = 0; i < Clusters.getClusters().size(); i++){
             if(!Clusters.getInvalidIds().contains(new Integer(i))){
-                for(int j = i + 1; j < Clusters.getClusters().size(); j++){
+                for(int j = 0; j < Clusters.getClusters().size(); j++){
                     if(!Clusters.getInvalidIds().contains(new Integer(j))){
                         if(distances[i][j] < minDist){
                             minDist = distances[i][j];

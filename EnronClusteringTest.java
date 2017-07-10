@@ -55,7 +55,20 @@ public class EnronClusteringTest {
         System.out.println();
         for(int i = 0; i < clusters.size(); i++){
             if(!Clusters.getInvalidIds().contains(i)){
-                System.out.println("Cluster " + i + " --> Member Size: " + clusters.get(i).getMemberSize() + " Doc Union Size: " + clusters.get(i).getDocSize());
+                int memberSize = clusters.get(i).getMemberSize();
+                int unionSize = clusters.get(i).getUnionSize();
+                System.out.println("Cluster " + i + " --> Member Size: " + memberSize + " Doc Union Size: " + unionSize);
+                if(memberSize > 1){
+                    System.out.println("Members of this cluster: ");
+                    for(int j = 0; j < memberSize; j++){
+                        int memberNo = clusters.get(i).getMembers().get(j);
+                        int memberDocSize = clusters.get(i).getMemberDocSizes().get(j);
+                        System.out.print("\t");
+                        System.out.println(i + ") Sample No: " + memberNo + " --> Doc Size: " + memberDocSize +
+                                " Overhead: " + (unionSize - memberDocSize) + " Overhead Percantage: " +
+                                ((double)(unionSize - memberDocSize) / memberDocSize));
+                    }
+                }
             }
         }
     }
