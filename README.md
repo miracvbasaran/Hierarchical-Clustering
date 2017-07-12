@@ -1,3 +1,3 @@
 # Hierarchical-Clustering
 
-Hierarchical CLustering implementation in Java.
+Hierarchical Clustering implementation in Java.
