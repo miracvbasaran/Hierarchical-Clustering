@@ -22,7 +22,7 @@ public class EnronClusteringTest {
         int lineNo = 0;
 
         int subsetSampleStartingIndex = 999;
-        int subsetSampleSize = 1000;
+        int subsetSampleSize = 2000;
         int subsetSampleEndingIndex = subsetSampleStartingIndex + subsetSampleSize;
 
         byte[][] features = new byte[subsetSampleSize][numFeatures];
@@ -48,9 +48,11 @@ public class EnronClusteringTest {
         System.out.println("Finished reading from file in " + runTime + " ms.");
 
         // Running the clustering Algorithm with *some* parameters
+        int maxOverHead = 2000;
+        double maxOverHeadRate = 10.0;
         startTime = System.currentTimeMillis();
         System.out.println("Started clustering.");
-        HierarchicalClustering clusterer = new HierarchicalClustering(features, 300, 10);
+        HierarchicalClustering clusterer = new HierarchicalClustering(features, maxOverHead, maxOverHeadRate,10);
         clusterer.runClustering();
         endTime = System.currentTimeMillis();
         runTime = endTime - startTime;
@@ -94,7 +96,7 @@ public class EnronClusteringTest {
             }
         }
         for(int i = 0; i < numFeatures; i++){
-            for(int j = subsetSampleStartingIndex; j  < subsetSampleEndingIndex - 1; j++){
+            for(int j = 0; j  < subsetSampleSize; j++){
                 docsNaive[i] += features[j][i];
             }
         }
@@ -110,8 +112,8 @@ public class EnronClusteringTest {
 
             }
             else{
-                System.out.println("Document " + i + " is stored " + docsClustering[i] + " times with clustering and " +
-                                    docsNaive[i] + " times with naive approach.");
+                //System.out.println("Document " + i + " is stored " + docsClustering[i] + " times with clustering and " +
+                //                    docsNaive[i] + " times with naive approach.");
                 numberOfUniqueRepeatedDocs++;
                 totalRepClustering = totalRepClustering + docsClustering[i] - 1;
                 totalRepNaive = totalRepNaive + docsNaive[i] - 1;
