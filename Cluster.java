@@ -27,10 +27,12 @@ public class Cluster {
             }
         }
         Features.docSizes[member] = unionSize;
+        Features.overheads[member] = 0;
     }
 
     public int addMember(int member){
         int diff = 0;
+        int diffComplement = 0;
         byte[] featuresToAdd = Clusters.getClusters().get(member).getUnion();
         for(int i = 0; i < featuresToAdd.length; i++){
             if(featuresToAdd[i] == 1){
@@ -39,11 +41,23 @@ public class Cluster {
                     diff++;
                 }
             }
+            else{
+                if(union[i] == 1){
+                    diffComplement++;
+                }
+            }
         }
 
         unionSize += diff;
+        for(int i = 0; i < this.getMemberSize(); i++){
+            int memberId = members.get(i);
+            Features.overheads[memberId] += diff;
+        }
         for(int i = 0; i < Clusters.getClusters().get(member).getMemberSize(); i++){
             memberSize++;
+            int idToAdd = Clusters.getClusters().get(member).getMembers().get(i);
+            members.add(idToAdd);
+            Features.overheads[idToAdd] += diffComplement;
         }
         return diff;
     }

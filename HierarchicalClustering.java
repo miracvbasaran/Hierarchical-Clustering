@@ -28,12 +28,13 @@ public class HierarchicalClustering {
         calculateInitialDistances(); // Setting initial clusters/distances
 
         // Clustering Loop
-        while(true){
+        while(Clusters.getInvalidIds().size() < Clusters.getClusters().size() - 1){
             Pair closestDistancePair = findClosestClusters();
             if(closestDistancePair != null){
                 updateDistances(closestDistancePair);
                 System.out.println("Merging clusters " + closestDistancePair.getNum1() + " and " + closestDistancePair.getNum2() + ".");
             }
+
             else{
                 break;
             }
@@ -43,7 +44,7 @@ public class HierarchicalClustering {
     // Calculating initial distances between samples/clusters,
     // as well as creating the initial clusters
     private void calculateInitialDistances(){
-        System.out.println("Calculating initial distances.");
+        System.out.println("Started calculating initial distances.");
         for(int i = 0; i < numSamples; i++){
             Clusters.getClusters().add(new Cluster(i));
 
@@ -115,7 +116,28 @@ public class HierarchicalClustering {
             }
         }
 
-        if(maxOverHead < minDist &&  maxOverHead < minDistComplement){
+        boolean flag = true;
+
+        for(int i = 0; i < Clusters.getClusters().get(cl1).getMemberSize(); i++){
+            if(Features.overheads[Clusters.getClusters().get(cl1).getMembers().get(i)] + minDist < maxOverHead){
+            }
+            else{
+                flag = false;
+                break;
+            }
+        }
+        if(flag){
+            for(int i = 0; i < Clusters.getClusters().get(cl2).getMemberSize(); i++){
+                if(Features.overheads[Clusters.getClusters().get(cl2).getMembers().get(i)] + minDistComplement < maxOverHead){
+                }
+                else{
+                    flag = false;
+                }
+            }
+        }
+
+
+        if(!flag){
             return null;
         }
         else{

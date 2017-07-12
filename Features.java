@@ -4,6 +4,7 @@
 public abstract class Features {
     private static byte[][] features;
     public static int[] docSizes;
+    public static int[] overheads;
 
     public static byte[][] getFeatures() {
         return features;
@@ -12,5 +13,6 @@ public abstract class Features {
     public static void setFeatures(byte[][] features) {
         Features.features = features;
         docSizes = new int[features.length];
+        overheads = new int[features.length];
     }
 }
