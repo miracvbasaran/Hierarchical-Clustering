@@ -8,13 +8,15 @@ public class HierarchicalClustering {
     private int numFeatures;
     private int numSamples;
     private int maxOverHead; // Maximum overhead for each query
+    private double maxOverHeadRate;
     private int maxDocRepetition; // Maximum number of times a document is repeated
 
 
 
-    public HierarchicalClustering(byte[][] features, int maxOverHead, int maxDocRepetition){
+    public HierarchicalClustering(byte[][] features, int maxOverHead, double maxOverHeadRate, int maxDocRepetition){
         Features.setFeatures(features);
         this.maxOverHead = maxOverHead;
+        this.maxOverHeadRate = maxOverHeadRate;
         this.maxDocRepetition = maxDocRepetition;
         numSamples = features.length;
         numFeatures = features[0].length;
@@ -103,11 +105,116 @@ public class HierarchicalClustering {
         cl2 = 1;
         for(int i = 0; i < Clusters.getClusters().size(); i++){
             if(!Clusters.getInvalidIds().contains(new Integer(i))){
-                for(int j = 0; j < Clusters.getClusters().size(); j++){
+                for(int j = i + 1; j < Clusters.getClusters().size(); j++){
                     if(!Clusters.getInvalidIds().contains(new Integer(j))){
-                        if(i != j && distances[i][j] < minDist){
-                            minDist = distances[i][j];
-                            minDistComplement = distances[j][i];
+                        int clusterDistance = distances[i][j];
+                        int clusterDistanceComplement = distances[j][i];
+                        boolean flag = false;
+
+                        int minMemberOverhead = 0;
+                        int maxMemberOverhead = 0;
+                        int maxComplementMemberOverhead = 0;
+                        int maxComplementK = 0;
+                        int minK = 0;
+                        int maxK = 0;
+
+                        // I to J is smaller
+                        if(clusterDistance < clusterDistanceComplement){
+                            Cluster clusterI = Clusters.getClusters().get(i);
+
+                            // Finding minDist
+                            for(int k = 0; k < clusterI.getMemberSize(); k++){
+                                int memberId = clusterI.getMembers().get(k);
+                                int memberOverhead = Features.overheads[memberId] + clusterDistance;
+                                if (k == 0){
+                                    minMemberOverhead = memberOverhead;
+                                    maxMemberOverhead = memberOverhead;
+                                }
+                                else{
+                                    if(memberOverhead < minMemberOverhead){
+                                        minMemberOverhead = minMemberOverhead;
+                                        minK = k;
+                                    }
+
+                                    if(maxMemberOverhead < memberOverhead){
+                                        maxMemberOverhead = memberOverhead;
+                                        maxK = k;
+                                    }
+                                }
+                            }
+
+                            // Finding distance complement
+                            Cluster clusterJ = Clusters.getClusters().get(j);
+                            for(int k = 0; k < clusterJ.getMemberSize(); k++){
+                                int memberId = clusterJ.getMembers().get(k);
+                                int memberOverhead = Features.overheads[memberId] + clusterDistanceComplement;
+                                if (k == 0){
+                                    maxComplementMemberOverhead = memberOverhead;
+                                }
+                                else{
+                                    if(maxComplementMemberOverhead < memberOverhead){
+                                        maxComplementMemberOverhead = memberOverhead;
+                                        maxComplementK = k;
+                                    }
+                                }
+                            }
+
+                            // Checking if maxMemberOverhead and maxComplementMemberOverhead is "OK"
+                            if((maxMemberOverhead < maxOverHead  || ((double)maxMemberOverhead / Features.overheads[clusterI.getMembers().get(maxK)]) < maxOverHeadRate)
+                                    && (maxComplementMemberOverhead < maxOverHead  || ((double)maxComplementMemberOverhead / Features.overheads[clusterJ.getMembers().get(maxComplementK)]) < maxOverHeadRate)){
+                                flag = true;
+                            }
+                        }
+                        // J to I is smaller
+                        else{
+                            Cluster clusterJ = Clusters.getClusters().get(j);
+
+                            // Finding minDist
+                            for(int k = 0; k < clusterJ.getMemberSize(); k++){
+                                int memberId = clusterJ.getMembers().get(k);
+                                int memberOverhead = Features.overheads[memberId] + clusterDistance;
+                                if (k == 0){
+                                    minMemberOverhead = memberOverhead;
+                                    maxMemberOverhead = memberOverhead;
+                                }
+                                else{
+                                    if(memberOverhead < minMemberOverhead){
+                                        minMemberOverhead = minMemberOverhead;
+                                        minK = k;
+                                    }
+
+                                    if(maxMemberOverhead < memberOverhead){
+                                        maxMemberOverhead = memberOverhead;
+                                        maxK = k;
+                                    }
+                                }
+                            }
+
+                            // Finding distance complement
+                            Cluster clusterI = Clusters.getClusters().get(i);
+                            for(int k = 0; k < clusterI.getMemberSize(); k++){
+                                int memberId = clusterI.getMembers().get(k);
+                                int memberOverhead = Features.overheads[memberId] + clusterDistanceComplement;
+                                if (k == 0){
+                                    maxComplementMemberOverhead = memberOverhead;
+                                }
+                                else{
+                                    if(maxComplementMemberOverhead < memberOverhead){
+                                        maxComplementMemberOverhead = memberOverhead;
+                                        maxComplementK = k;
+                                    }
+                                }
+                            }
+
+                            // Checking if maxMemberOverhead and maxComplementMemberOverhead is "OK"
+                            if((maxMemberOverhead < maxOverHead  || ((double)maxMemberOverhead / Features.overheads[clusterJ.getMembers().get(maxK)]) < maxOverHeadRate)
+                                    && (maxComplementMemberOverhead < maxOverHead  || ((double)maxComplementMemberOverhead / Features.overheads[clusterI.getMembers().get(maxComplementK)]) < maxOverHeadRate)){
+                                flag = true;
+                            }
+                        }
+                        if(flag && minMemberOverhead < minDist){
+                            minDist = minMemberOverhead;
+                            minDistComplement = maxComplementMemberOverhead;
                             cl1 = i;
                             cl2 = j;
                         }
@@ -119,7 +226,9 @@ public class HierarchicalClustering {
         boolean flag = true;
 
         for(int i = 0; i < Clusters.getClusters().get(cl1).getMemberSize(); i++){
-            if(Features.overheads[Clusters.getClusters().get(cl1).getMembers().get(i)] + minDist < maxOverHead){
+            if(Features.overheads[Clusters.getClusters().get(cl1).getMembers().get(i)] + minDist < maxOverHead ||
+                    ((double)(Features.overheads[Clusters.getClusters().get(cl1).getMembers().get(i)] + minDist) /
+                            Features.docSizes[Clusters.getClusters().get(cl1).getMembers().get(i)]) < maxOverHeadRate){
             }
             else{
                 flag = false;
@@ -128,7 +237,9 @@ public class HierarchicalClustering {
         }
         if(flag){
             for(int i = 0; i < Clusters.getClusters().get(cl2).getMemberSize(); i++){
-                if(Features.overheads[Clusters.getClusters().get(cl2).getMembers().get(i)] + minDistComplement < maxOverHead){
+                if(Features.overheads[Clusters.getClusters().get(cl2).getMembers().get(i)] + minDistComplement < maxOverHead ||
+                        ((double)(Features.overheads[Clusters.getClusters().get(cl2).getMembers().get(i)] + minDistComplement) /
+                                Features.docSizes[Clusters.getClusters().get(cl2).getMembers().get(i)]) < maxOverHeadRate){
                 }
                 else{
                     flag = false;
