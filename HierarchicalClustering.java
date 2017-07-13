@@ -46,6 +46,7 @@ public class HierarchicalClustering {
     // Calculating initial distances between samples/clusters,
     // as well as creating the initial clusters
     private void calculateInitialDistances(){
+        long startTime = System.currentTimeMillis();
         System.out.println("Started calculating initial distances.");
         for(int i = 0; i < numSamples; i++){
             Clusters.getClusters().add(new Cluster(i));
@@ -65,7 +66,14 @@ public class HierarchicalClustering {
                 }
             }
         }
-        System.out.println("Done calculating initial distances.");
+        long endTime = System.currentTimeMillis();
+        long runTimeInMs = endTime - startTime;
+        long runTimeInS = (runTimeInMs) / 1000;
+        long runTimeInM = runTimeInS / 60;
+        runTimeInS = (runTimeInS) % 60;
+
+        System.out.println("Done calculating initial distances in " + runTimeInM + " minutes and " + runTimeInS + "s.");
+
     }
 
     // Updating distances after merging two clusters

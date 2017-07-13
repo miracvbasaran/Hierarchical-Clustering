@@ -15,18 +15,19 @@ public class EnronClusteringTest {
 
         String line = null;
         Scanner scan = null;
-        long startTime, endTime, runTime;
+        long startTime, endTime, runTime, overallStartTime, overallEndTime, overallRunTimeInMs, overallRunTimeInS, overallRunTimeInM;
 
         int numSamples = 76577;
         int numFeatures = 30109;
         int lineNo = 0;
 
         int subsetSampleStartingIndex = 999;
-        int subsetSampleSize = 2000;
+        int subsetSampleSize = 6000;
         int subsetSampleEndingIndex = subsetSampleStartingIndex + subsetSampleSize;
 
         byte[][] features = new byte[subsetSampleSize][numFeatures];
 
+        overallStartTime = System.currentTimeMillis();
         startTime = System.currentTimeMillis();
         System.out.println("Started reading from file.");
         while((line = reader.readLine()) != null && lineNo < subsetSampleEndingIndex){
@@ -122,7 +123,8 @@ public class EnronClusteringTest {
 
 
 
-
+        System.out.println("Testing with " + subsetSampleSize + " keywords with maxOverHead " + maxOverHead +
+                " and maxOverHeadRate " + maxOverHeadRate);
         System.out.println("CLUSTERING --> Total number of unique repeated documents is " + numberOfUniqueRepeatedDocs + " out of " +
                 documentsInSample + " total documents.");
         System.out.println("CLUSTERING --> Total number of repeated documents is " + totalRepClustering + " out of " +
@@ -137,6 +139,15 @@ public class EnronClusteringTest {
         endTime = System.currentTimeMillis();
         runTime = endTime - startTime;
         System.out.println("Finished running tests " + runTime + " ms.");
+
+        overallEndTime = System.currentTimeMillis();
+        overallRunTimeInMs = overallEndTime - overallStartTime;
+        overallRunTimeInS = overallRunTimeInMs / 1000;
+        overallRunTimeInM = overallRunTimeInS / 60;
+        overallRunTimeInS = overallRunTimeInS % 60;
+        System.out.println();
+        System.out.println("Overall running time: " + overallRunTimeInM + " minutes " + overallRunTimeInS + " s.");
+
     }
 
 
