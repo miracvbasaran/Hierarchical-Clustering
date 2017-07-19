@@ -8,22 +8,26 @@ import java.util.Scanner;
  * Created by Mirac Vuslat Basaran on 07-Jul-17.
  */
 public class EnronClusteringTest {
-
+    public static long startTime, endTime, runTime, overallStartTime, overallEndTime, overallRunTimeInMs, overallRunTimeInS, overallRunTimeInM;
+    public static int numSamples = 76577;
+    public static int numFeatures = 30109;
+    public static byte[][] features;
+    public static int subsetSampleStartingIndex, subsetSampleSize, subsetSampleEndingIndex;
+    public static int maxOverHead;
+    public static double maxOverHeadRate;
     public static void main(String[] args) throws IOException{
         String enronFeatureFileName = "C:\\Users\\Mirac Vuslat Basaran\\IdeaProjects\\Clustering\\features.txt";
         BufferedReader reader = new BufferedReader(new FileReader(enronFeatureFileName));
 
         String line = null;
         Scanner scan = null;
-        long startTime, endTime, runTime, overallStartTime, overallEndTime, overallRunTimeInMs, overallRunTimeInS, overallRunTimeInM;
 
-        int numSamples = 76577;
-        int numFeatures = 30109;
+
         int lineNo = 0;
 
-        int subsetSampleStartingIndex = 999;
-        int subsetSampleSize = 6000;
-        int subsetSampleEndingIndex = subsetSampleStartingIndex + subsetSampleSize;
+        subsetSampleStartingIndex = 999;
+        subsetSampleSize = 4000;
+        subsetSampleEndingIndex = subsetSampleStartingIndex + subsetSampleSize;
 
         byte[][] features = new byte[subsetSampleSize][numFeatures];
 
@@ -49,8 +53,8 @@ public class EnronClusteringTest {
         System.out.println("Finished reading from file in " + runTime + " ms.");
 
         // Running the clustering Algorithm with *some* parameters
-        int maxOverHead = 2000;
-        double maxOverHeadRate = 10.0;
+        maxOverHead = 2000;
+        maxOverHeadRate = 10.0;
         startTime = System.currentTimeMillis();
         System.out.println("Started clustering.");
         HierarchicalClustering clusterer = new HierarchicalClustering(features, maxOverHead, maxOverHeadRate,10);
@@ -61,11 +65,21 @@ public class EnronClusteringTest {
 
 
         // Running tests on the clusters
+        runTests();
+
+    }
+
+
+    public static void runTests(){
+        // TODO Bug on Naive Tests
         startTime = System.currentTimeMillis();
+
+        System.out.println();
         System.out.println("Started running tests.");
         ArrayList<Cluster> clusters = Clusters.getClusters();
         System.out.println("Total Number Of Clusters: " + (clusters.size() - Clusters.getInvalidIds().size()));
         System.out.println();
+
         for(int i = 0; i < clusters.size(); i++){
             if(!Clusters.getInvalidIds().contains(i)){
                 int memberSize = clusters.get(i).getMemberSize();
@@ -78,7 +92,7 @@ public class EnronClusteringTest {
                         int memberDocSize = Features.docSizes[memberNo];
                         System.out.print("\t");
                         System.out.println(i + ") Sample No: " + memberNo + " --> Doc Size: " + memberDocSize +
-                                " Overhead: " + (unionSize - memberDocSize) + " Overhead Percantage: " +
+                                " Overhead: " + (unionSize - memberDocSize) + " Overhead Rate: " +
                                 ((double)(unionSize - memberDocSize) / memberDocSize));
                     }
                 }
@@ -89,6 +103,28 @@ public class EnronClusteringTest {
         System.out.println("Tests on Document Repetition:");
         int[] docsClustering = new int[numFeatures];
         int[] docsNaive = new int[numFeatures];
+
+
+        // Naive Test
+        int numberOfUniqueRepeatedDocsNaive = 0;
+        int totalRepNaive = 0;
+
+        for(int i = 0; i < numFeatures; i++){
+            for(int j = 0; j  < subsetSampleSize; j++){
+                docsNaive[i] += features[j][i];
+            }
+            if(1 < docsNaive[i]){
+                numberOfUniqueRepeatedDocsNaive++;
+            }
+        }
+
+        for(int i = 0; i < numFeatures; i++){
+            totalRepNaive += docsNaive[i] - 1;
+        }
+
+
+
+        // Clustering Test
         for(int i = 0; i < clusters.size(); i++){
             if(!Clusters.getInvalidIds().contains(i)){
                 for(int j = 0; j < numFeatures; j++){
@@ -96,14 +132,10 @@ public class EnronClusteringTest {
                 }
             }
         }
-        for(int i = 0; i < numFeatures; i++){
-            for(int j = 0; j  < subsetSampleSize; j++){
-                docsNaive[i] += features[j][i];
-            }
-        }
-        int numberOfUniqueRepeatedDocs = 0;
+
+
+        int numberOfUniqueRepeatedDocsClustering = 0;
         int totalRepClustering = 0;
-        int totalRepNaive = 0;
         int documentsInSample = numFeatures;
         for(int i = 0; i < numFeatures; i++){
             if (docsClustering[i] == 0){
@@ -115,9 +147,8 @@ public class EnronClusteringTest {
             else{
                 //System.out.println("Document " + i + " is stored " + docsClustering[i] + " times with clustering and " +
                 //                    docsNaive[i] + " times with naive approach.");
-                numberOfUniqueRepeatedDocs++;
+                numberOfUniqueRepeatedDocsClustering++;
                 totalRepClustering = totalRepClustering + docsClustering[i] - 1;
-                totalRepNaive = totalRepNaive + docsNaive[i] - 1;
             }
         }
 
@@ -125,16 +156,21 @@ public class EnronClusteringTest {
 
         System.out.println("Testing with " + subsetSampleSize + " keywords with maxOverHead " + maxOverHead +
                 " and maxOverHeadRate " + maxOverHeadRate);
-        System.out.println("CLUSTERING --> Total number of unique repeated documents is " + numberOfUniqueRepeatedDocs + " out of " +
-                documentsInSample + " total documents.");
-        System.out.println("CLUSTERING --> Total number of repeated documents is " + totalRepClustering + " out of " +
-                documentsInSample + " total documents.");
-        System.out.println("CLUSTERING --> Document repetition overhead is " + ((double)(totalRepClustering) / documentsInSample) + " out of " +
+        System.out.println();
+        System.out.println("NAIVE --> Total number of unique repeated documents is " + numberOfUniqueRepeatedDocsNaive + " out of " +
                 documentsInSample + " total documents.");
         System.out.println("NAIVE --> Total number of repeated documents is " + totalRepNaive + " out of " +
                 documentsInSample + " total documents.");
         System.out.println("NAIVE --> Document repetition overhead is " + ((double)(totalRepNaive) / documentsInSample) + " out of " +
                 documentsInSample + " total documents.");
+        System.out.println();
+        System.out.println("CLUSTERING --> Total number of unique repeated documents is " + numberOfUniqueRepeatedDocsClustering + " out of " +
+                documentsInSample + " total documents.");
+        System.out.println("CLUSTERING --> Total number of repeated documents is " + totalRepClustering + " out of " +
+                documentsInSample + " total documents.");
+        System.out.println("CLUSTERING --> Document repetition overhead is " + ((double)(totalRepClustering) / documentsInSample) + " out of " +
+                documentsInSample + " total documents.");
+
 
         endTime = System.currentTimeMillis();
         runTime = endTime - startTime;
@@ -147,7 +183,6 @@ public class EnronClusteringTest {
         overallRunTimeInS = overallRunTimeInS % 60;
         System.out.println();
         System.out.println("Overall running time: " + overallRunTimeInM + " minutes " + overallRunTimeInS + " s.");
-
     }
 
 

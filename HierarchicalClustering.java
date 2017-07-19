@@ -82,7 +82,7 @@ public class HierarchicalClustering {
         int cl2 = clusterIds.getNum2();
 
         Clusters.getClusters().get(cl1).addMember(cl2);
-
+        Clusters.addInvalidId(new Integer(cl2));
         for(int i = 0; i < Clusters.getClusters().size(); i++){
             if(!Clusters.getInvalidIds().contains(new Integer(i))){
                 int distCl1ToI = 0;
@@ -99,18 +99,65 @@ public class HierarchicalClustering {
                 distances[i][cl1] = distIToCl1;
             }
         }
-
-        Clusters.addInvalidId(new Integer(cl2));
     }
 
     // TODO: Finished?
     // TODO: Overhead Check
     private Pair findClosestClusters(){
+
+        // Initial Minimum Distance
+        int minDist, minDistMax;
         int cl1, cl2;
-        int minDist = distances[0][1];
-        int minDistComplement = distances[1][0];
-        cl1 = 0;
-        cl2 = 1;
+        double minDistMaxOR = 1;
+        boolean initialFlag = true;
+        boolean changeFlag = false;
+        int ctr = 0;
+        do{
+            cl1 = ctr;
+            cl2 = ctr + 1;
+            for(int i = 0; i < Clusters.getClusters().size(); i++){
+                if(!Clusters.getInvalidIds().contains(i)){
+                    cl1 = i;
+                    break;
+                }
+            }
+            for(int i = cl1 + 1; i < Clusters.getClusters().size(); i++){
+                if(!Clusters.getInvalidIds().contains(i)){
+                    cl2 = i;
+                    break;
+                }
+            }
+            minDist = Features.overheads[Clusters.getClusters().get(cl1).getMembers().get(0)] + distances[cl1][cl2];
+            minDistMax = Features.overheads[Clusters.getClusters().get(cl1).getMembers().get(0)] + distances[cl1][cl2];
+            for(int i = 0; i < Clusters.getClusters().get(cl1).getMemberSize(); i++){
+                int localDist = Features.overheads[Clusters.getClusters().get(cl1).getMembers().get(i)] + distances[cl1][cl2];
+                if(localDist < minDist){
+                    minDist = localDist;
+                }
+                if(minDistMax < localDist){
+                    minDistMax = localDist;
+                    minDistMaxOR = (double)localDist / Features.docSizes[Clusters.getClusters().get(cl1).getMembers().get(i)];
+                }
+            }
+            for(int i = 0; i < Clusters.getClusters().get(cl2).getMemberSize(); i++){
+                int localDist = Features.overheads[Clusters.getClusters().get(cl2).getMembers().get(i)] + distances[cl2][cl1];
+                if(localDist < minDist){
+                    minDist = localDist;
+                }
+                if(minDistMax < localDist){
+                    minDistMax = localDist;
+                    minDistMaxOR = (double)localDist / Features.docSizes[Clusters.getClusters().get(cl2).getMembers().get(i)];
+                }
+            }
+            if (minDistMax < maxOverHead || minDistMaxOR < maxOverHeadRate){
+                initialFlag = false;
+            }
+        } while(false);
+
+
+
+
+        // Finding the actual minimum distance
         for(int i = 0; i < Clusters.getClusters().size(); i++){
             if(!Clusters.getInvalidIds().contains(new Integer(i))){
                 for(int j = i + 1; j < Clusters.getClusters().size(); j++){
@@ -168,8 +215,8 @@ public class HierarchicalClustering {
                             }
 
                             // Checking if maxMemberOverhead and maxComplementMemberOverhead is "OK"
-                            if((maxMemberOverhead < maxOverHead  || ((double)maxMemberOverhead / Features.overheads[clusterI.getMembers().get(maxK)]) < maxOverHeadRate)
-                                    && (maxComplementMemberOverhead < maxOverHead  || ((double)maxComplementMemberOverhead / Features.overheads[clusterJ.getMembers().get(maxComplementK)]) < maxOverHeadRate)){
+                            if((maxMemberOverhead < maxOverHead  || ((double)maxMemberOverhead / Features.docSizes[clusterI.getMembers().get(maxK)]) < maxOverHeadRate)
+                                    && (maxComplementMemberOverhead < maxOverHead  || ((double)maxComplementMemberOverhead / Features.docSizes[clusterJ.getMembers().get(maxComplementK)]) < maxOverHeadRate)){
                                 flag = true;
                             }
                         }
@@ -215,23 +262,24 @@ public class HierarchicalClustering {
                             }
 
                             // Checking if maxMemberOverhead and maxComplementMemberOverhead is "OK"
-                            if((maxMemberOverhead < maxOverHead  || ((double)maxMemberOverhead / Features.overheads[clusterJ.getMembers().get(maxK)]) < maxOverHeadRate)
-                                    && (maxComplementMemberOverhead < maxOverHead  || ((double)maxComplementMemberOverhead / Features.overheads[clusterI.getMembers().get(maxComplementK)]) < maxOverHeadRate)){
+                            if((maxMemberOverhead < maxOverHead  || ((double)maxMemberOverhead / Features.docSizes[clusterJ.getMembers().get(maxK)]) < maxOverHeadRate)
+                                    && (maxComplementMemberOverhead < maxOverHead  || ((double)maxComplementMemberOverhead / Features.docSizes[clusterI.getMembers().get(maxComplementK)]) < maxOverHeadRate)){
                                 flag = true;
                             }
                         }
                         if(flag && minMemberOverhead < minDist){
                             minDist = minMemberOverhead;
-                            minDistComplement = maxComplementMemberOverhead;
+                            minDistMax = maxComplementMemberOverhead;
                             cl1 = i;
                             cl2 = j;
+                            changeFlag = true;
                         }
                     }
                 }
             }
         }
 
-        boolean flag = true;
+        /*boolean flag = true;
 
         for(int i = 0; i < Clusters.getClusters().get(cl1).getMemberSize(); i++){
             if(Features.overheads[Clusters.getClusters().get(cl1).getMembers().get(i)] + minDist < maxOverHead ||
@@ -259,7 +307,8 @@ public class HierarchicalClustering {
         if(!flag){
             return null;
         }
-        else{
+        else{*/
+        if(!initialFlag || changeFlag){
             if(cl1 < cl2){
                 return new Pair(cl1, cl2);
             }
@@ -267,6 +316,12 @@ public class HierarchicalClustering {
                 return new Pair(cl2, cl1);
             }
         }
+        else{
+            return null;
+        }
+
+
+        //}
     }
 
 }
