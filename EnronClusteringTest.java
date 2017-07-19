@@ -15,6 +15,8 @@ public class EnronClusteringTest {
     public static int subsetSampleStartingIndex, subsetSampleSize, subsetSampleEndingIndex;
     public static int maxOverHead;
     public static double maxOverHeadRate;
+
+
     public static void main(String[] args) throws IOException{
         String enronFeatureFileName = "C:\\Users\\Mirac Vuslat Basaran\\IdeaProjects\\Clustering\\features.txt";
         BufferedReader reader = new BufferedReader(new FileReader(enronFeatureFileName));
@@ -25,11 +27,11 @@ public class EnronClusteringTest {
 
         int lineNo = 0;
 
-        subsetSampleStartingIndex = 999;
-        subsetSampleSize = 4000;
+        subsetSampleStartingIndex = 0;
+        subsetSampleSize = 2000;
         subsetSampleEndingIndex = subsetSampleStartingIndex + subsetSampleSize;
 
-        byte[][] features = new byte[subsetSampleSize][numFeatures];
+        features = new byte[subsetSampleSize][numFeatures];
 
         overallStartTime = System.currentTimeMillis();
         startTime = System.currentTimeMillis();
@@ -53,35 +55,59 @@ public class EnronClusteringTest {
         System.out.println("Finished reading from file in " + runTime + " ms.");
 
         // Running the clustering Algorithm with *some* parameters
-        maxOverHead = 2000;
-        maxOverHeadRate = 10.0;
+        int O = 2000;
+        double OR = 10.0;
+        runClustering(O, OR);
+
+
+        // Running tests on the clusters
+        runTests();
+
+
+        // Finish Program
+        overallEndTime = System.currentTimeMillis();
+        overallRunTimeInMs = overallEndTime - overallStartTime;
+        overallRunTimeInS = overallRunTimeInMs / 1000;
+        overallRunTimeInM = overallRunTimeInS / 60;
+        overallRunTimeInS = overallRunTimeInS % 60;
+        System.out.println();
+        System.out.println("Overall running time: " + overallRunTimeInM + " minutes " + overallRunTimeInS + " s.");
+    }
+
+    public static void runClustering(int O, double OR){
+        maxOverHead = O;
+        maxOverHeadRate = OR;
         startTime = System.currentTimeMillis();
         System.out.println("Started clustering.");
         HierarchicalClustering clusterer = new HierarchicalClustering(features, maxOverHead, maxOverHeadRate,10);
         clusterer.runClustering();
         endTime = System.currentTimeMillis();
         runTime = endTime - startTime;
+        System.out.println();
         System.out.println("Finished clustering " + runTime + " ms.");
-
-
-        // Running tests on the clusters
-        runTests();
-
     }
 
 
     public static void runTests(){
-        // TODO Bug on Naive Tests
         startTime = System.currentTimeMillis();
 
-        System.out.println();
         System.out.println("Started running tests.");
         ArrayList<Cluster> clusters = Clusters.getClusters();
         System.out.println("Total Number Of Clusters: " + (clusters.size() - Clusters.getInvalidIds().size()));
         System.out.println();
 
+
+        int[] docsClustering = new int[numFeatures];
+        int[] docsNaive = new int[numFeatures];
+
         for(int i = 0; i < clusters.size(); i++){
             if(!Clusters.getInvalidIds().contains(i)){
+
+                // Loop to calculate docsClustering
+                for(int j = 0; j < numFeatures; j++){
+                    docsClustering[j] += clusters.get(i).getUnion()[j];
+                }
+
                 int memberSize = clusters.get(i).getMemberSize();
                 int unionSize = clusters.get(i).getUnionSize();
                 System.out.println("Cluster " + i + " --> Member Size: " + memberSize + " Doc Union Size: " + unionSize);
@@ -101,54 +127,42 @@ public class EnronClusteringTest {
 
         System.out.println("");
         System.out.println("Tests on Document Repetition:");
-        int[] docsClustering = new int[numFeatures];
-        int[] docsNaive = new int[numFeatures];
-
 
         // Naive Test
         int numberOfUniqueRepeatedDocsNaive = 0;
         int totalRepNaive = 0;
+        int documentsInSample = numFeatures;
 
         for(int i = 0; i < numFeatures; i++){
             for(int j = 0; j  < subsetSampleSize; j++){
                 docsNaive[i] += features[j][i];
             }
-            if(1 < docsNaive[i]){
-                numberOfUniqueRepeatedDocsNaive++;
+
+            if (docsNaive[i] == 0){
+                documentsInSample--;
             }
-        }
-
-        for(int i = 0; i < numFeatures; i++){
-            totalRepNaive += docsNaive[i] - 1;
-        }
-
-
-
-        // Clustering Test
-        for(int i = 0; i < clusters.size(); i++){
-            if(!Clusters.getInvalidIds().contains(i)){
-                for(int j = 0; j < numFeatures; j++){
-                    docsClustering[j] += clusters.get(i).getUnion()[j];
+            else{
+                totalRepNaive += docsNaive[i] - 1;
+                if(1 < docsNaive[i]){
+                    numberOfUniqueRepeatedDocsNaive++;
                 }
             }
         }
 
 
+
+        // Clustering Test
         int numberOfUniqueRepeatedDocsClustering = 0;
         int totalRepClustering = 0;
-        int documentsInSample = numFeatures;
-        for(int i = 0; i < numFeatures; i++){
-            if (docsClustering[i] == 0){
-                documentsInSample--;
-            }
-            else if(docsClustering[i] == 1){
 
-            }
-            else{
-                //System.out.println("Document " + i + " is stored " + docsClustering[i] + " times with clustering and " +
-                //                    docsNaive[i] + " times with naive approach.");
-                numberOfUniqueRepeatedDocsClustering++;
+        for(int i = 0; i < numFeatures; i++){
+            if(docsClustering[i] != 0){
+                // System.out.println("Document " + i + " is stored " + docsClustering[i] + " times with clustering and " +
+                //                     docsNaive[i] + " times with naive approach.");
                 totalRepClustering = totalRepClustering + docsClustering[i] - 1;
+                if(docsClustering[i] > 1){
+                    numberOfUniqueRepeatedDocsClustering++;
+                }
             }
         }
 
@@ -175,14 +189,6 @@ public class EnronClusteringTest {
         endTime = System.currentTimeMillis();
         runTime = endTime - startTime;
         System.out.println("Finished running tests " + runTime + " ms.");
-
-        overallEndTime = System.currentTimeMillis();
-        overallRunTimeInMs = overallEndTime - overallStartTime;
-        overallRunTimeInS = overallRunTimeInMs / 1000;
-        overallRunTimeInM = overallRunTimeInS / 60;
-        overallRunTimeInS = overallRunTimeInS % 60;
-        System.out.println();
-        System.out.println("Overall running time: " + overallRunTimeInM + " minutes " + overallRunTimeInS + " s.");
     }
 
 

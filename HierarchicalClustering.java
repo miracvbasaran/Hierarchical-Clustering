@@ -73,6 +73,7 @@ public class HierarchicalClustering {
         runTimeInS = (runTimeInS) % 60;
 
         System.out.println("Done calculating initial distances in " + runTimeInM + " minutes and " + runTimeInS + "s.");
+        System.out.println();
 
     }
 
