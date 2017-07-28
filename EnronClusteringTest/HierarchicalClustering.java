@@ -1,5 +1,8 @@
 package EnronClusteringTest;
 
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.*;
 
 /**
@@ -17,9 +20,11 @@ public class HierarchicalClustering {
     private boolean withinOverheadBounds;
     private boolean averageDistLinkage;
     private boolean minSum;
+    private String mergeFileName;
 
 
-    public HierarchicalClustering(byte[][] features, int maxOverHead, double maxOverHeadRate, double maxDocRepetition, boolean minStorage, boolean averageDistLinkage, boolean minSum, boolean showMergingMessages){
+    public HierarchicalClustering(byte[][] features, int maxOverHead, double maxOverHeadRate, double maxDocRepetition, boolean minStorage,
+                                  boolean averageDistLinkage, boolean minSum, boolean showMergingMessages, String mergeFileName){
         Features.setFeatures(features);
         this.maxOverHead = maxOverHead;
         this.maxOverHeadRate = maxOverHeadRate;
@@ -29,6 +34,8 @@ public class HierarchicalClustering {
         this.averageDistLinkage = averageDistLinkage;
         this.minSum = minSum;
         this.withinOverheadBounds = true;
+        this.mergeFileName = mergeFileName;
+
         numSamples = features.length;
         numFeatures = features[0].length;
         distances = new int[numSamples][numFeatures];
@@ -37,8 +44,11 @@ public class HierarchicalClustering {
     }
 
     // Main method to run the clustering algorithm
-    public void runClustering(){
+    public void runClustering () throws IOException {
         calculateInitialDistances(); // Setting initial clusters/distances
+        FileWriter fw = new FileWriter(mergeFileName);
+        PrintWriter out = new PrintWriter(fw);
+
 
         // Clustering Loop
         Pair closestDistancePair;
@@ -52,7 +62,7 @@ public class HierarchicalClustering {
             if(closestDistancePair != null){
                 updateDistances(closestDistancePair);
                 if(showMergingMessages){
-                    System.out.println("Merging clusters " + closestDistancePair.getNum1() + " and " + closestDistancePair.getNum2() + ".");
+                    out.println("Merging clusters " + closestDistancePair.getNum1() + " and " + closestDistancePair.getNum2() + ".");
                 }
             }
 
@@ -62,6 +72,7 @@ public class HierarchicalClustering {
                 }
             }
         } while((!minStorage && closestDistancePair != null) || (minStorage && !checkDocRepetition()));
+        out.close();
     }
 
     // Calculating initial distances between samples/clusters,
@@ -110,10 +121,10 @@ public class HierarchicalClustering {
                 int distCl1ToI = 0;
                 int distIToCl1 = 0;
                 for(int k = 0; k < numFeatures; k++){
-                    if(Clusters.getClusters().get(cl1).getUnion()[k] == 0 && Clusters.getClusters().get(i).getUnion()[k] == 1){
+                    if(Clusters.getClusters().get(cl1).union[k] == 0 && Clusters.getClusters().get(i).union[k] == 1){
                         distCl1ToI++;
                     }
-                    else if(Clusters.getClusters().get(cl1).getUnion()[k] == 1 && Clusters.getClusters().get(i).getUnion()[k] == 0){
+                    else if(Clusters.getClusters().get(cl1).union[k] == 1 && Clusters.getClusters().get(i).union[k] == 0){
                         distIToCl1++;
                     }
                 }
@@ -133,7 +144,7 @@ public class HierarchicalClustering {
 
                 // Loop to calculate docsClustering
                 for(int j = 0; j < numFeatures; j++){
-                    docsClustering[j] += clusters.get(i).getUnion()[j];
+                    docsClustering[j] += clusters.get(i).union[j];
                 }
             }
         }
@@ -223,14 +234,19 @@ public class HierarchicalClustering {
         globalMinDistMax = initialMax;
         globalMinDistMaxOR = initialMaxOR;
 
+        int similarity = 0;
+        for(int k = 0; k < Clusters.getClusters().get(cl1).union.length; k++){
+            if(Clusters.getClusters().get(cl1).union[k] == 1 && Clusters.getClusters().get(cl2).union[k] == 1){
+                similarity++;
+            }
+        }
 
 
-
-        if(minStorage || (globalMinDistMax < maxOverHead && globalMinDistMaxOR < maxOverHeadRate)){
+        if(0 < similarity && (minStorage || (globalMinDistMax < maxOverHead && globalMinDistMaxOR < maxOverHeadRate))){
             flag = true;
         }
 
-        // Loop to find actual mindDist
+        // Loop to find actual minDist
         for(int i = 0; i < Clusters.getClusters().size(); i++){
             if(!Clusters.getInvalidIds().contains(new Integer(i))){
                 for(int j = i + 1; j < Clusters.getClusters().size(); j++){
@@ -277,6 +293,13 @@ public class HierarchicalClustering {
 
                         if(minSum){
                             if(sumDistances < globalMinSum){
+                                similarity = 0;
+                                for(int k = 0; k < clusterI.union.length; k++){
+                                    if(clusterI.union[k] == 1 && clusterJ.union[k] == 1){
+                                        similarity++;
+                                    }
+                                }
+
                                 if(minStorage){
                                     cl1 = i;
                                     cl2 = j;
@@ -286,7 +309,7 @@ public class HierarchicalClustering {
                                     globalMinDistMaxOR = maxOR;
                                     flag = true;
                                 }
-                                else if(maxDistance < maxOverHead || maxOR < maxOverHeadRate){
+                                else if(0 < similarity && (maxDistance < maxOverHead || maxOR < maxOverHeadRate)){
                                     cl1 = i;
                                     cl2 = j;
                                     globalMinDist = averageDist;

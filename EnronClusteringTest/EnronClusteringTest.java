@@ -19,6 +19,8 @@ public class EnronClusteringTest {
     public static boolean minStorage;
     public static boolean averageDistanceLinkage;
     public static boolean minSum;
+    private static String mergeFileName;
+    private static String clusterFileName;
 
 
     public static void main(String[] args) throws IOException{
@@ -47,7 +49,12 @@ public class EnronClusteringTest {
         boolean MS = Integer.parseInt(args[5]) == 1;
         boolean ADL = Integer.parseInt(args[6]) == 1;
         boolean minS = Integer.parseInt(args[7]) == 1;
-        String outFileName = args[8];
+        String outFileName = "TestWithParameters_" + args[0] + "_" + args[1] + "_" + args[2] + "_" + args[3] + "_" +
+                args[4] + "_" + args[5] + "_" + args[6] + "_" + args[7] + ".txt";
+        mergeFileName = "MergingWithParameters_" + args[0] + "_" + args[1] + "_" + args[2] + "_" + args[3] + "_" +
+                args[4] + "_" + args[5] + "_" + args[6] + "_" + args[7] + ".txt";
+        clusterFileName = "ClusterIdsWithParameters_" + args[0] + "_" + args[1] + "_" + args[2] + "_" + args[3] + "_" +
+                args[4] + "_" + args[5] + "_" + args[6] + "_" + args[7] + ".txt";
 
         runClustering(O, OR, MDR, MS, ADL, minS, showMergingMessages);
 
@@ -104,7 +111,7 @@ public class EnronClusteringTest {
         System.out.println("Finished reading from file in " + runTime + " ms.");
     }
 
-    public static void runClustering(int O, double OR, double maxDocRep, boolean MS, boolean ADL, boolean minS, boolean showMergingMessages){
+    public static void runClustering(int O, double OR, double maxDocRep, boolean MS, boolean ADL, boolean minS, boolean showMergingMessages) throws IOException{
         maxOverHead = O;
         maxOverHeadRate = OR;
         maxDocRepetition = maxDocRep;
@@ -113,7 +120,7 @@ public class EnronClusteringTest {
         minSum = minS;
         startTime = System.currentTimeMillis();
         System.out.println("Started clustering.");
-        HierarchicalClustering clusterer = new HierarchicalClustering(features, maxOverHead, maxOverHeadRate, maxDocRepetition, minStorage, averageDistanceLinkage, minSum, showMergingMessages);
+        HierarchicalClustering clusterer = new HierarchicalClustering(features, maxOverHead, maxOverHeadRate, maxDocRepetition, minStorage, averageDistanceLinkage, minSum, showMergingMessages, mergeFileName);
         clusterer.runClustering();
         endTime = System.currentTimeMillis();
         runTime = endTime - startTime;
@@ -145,7 +152,7 @@ public class EnronClusteringTest {
 
                     // Loop to calculate docsClustering
                     for(int j = 0; j < numFeatures; j++){
-                        docsClustering[j] += clusters.get(i).getUnion()[j];
+                        docsClustering[j] += clusters.get(i).union[j];
                     }
 
                     int memberSize = clusters.get(i).getMemberSize();
@@ -276,6 +283,20 @@ public class EnronClusteringTest {
             out.println("Average Overhead Rate: " + averageOverheadRate);
 
             out.close();
+        }
+
+        fw = new FileWriter(clusterFileName);
+        out = new PrintWriter(fw);
+
+        // Storing clusters
+        int[] keywordToCluster = new int[subsetSampleSize];
+        for(int i = 0; i < Clusters.getClusters().size(); i++){
+            for(int j = 0; j < Clusters.getClusters().get(i).members.size(); j++){
+                keywordToCluster[Clusters.getClusters().get(i).members.get(j)] = i;
+            }
+        }
+        for(int i = 0; i < subsetSampleSize; i++){
+            out.println((i + subsetSampleStartingIndex) + " " + keywordToCluster[i]);
         }
 
 

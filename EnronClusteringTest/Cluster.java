@@ -9,7 +9,7 @@ public class Cluster {
     ArrayList<Integer> members;
     private int memberSize;
     private int unionSize;
-    private byte[] union;
+    public byte[] union;
 
     public Cluster(){
         members = new ArrayList<Integer>();
@@ -35,7 +35,7 @@ public class Cluster {
     public int addMember(int member){
         int diff = 0;
         int diffComplement = 0;
-        byte[] featuresToAdd = Clusters.getClusters().get(member).getUnion();
+        byte[] featuresToAdd = Clusters.getClusters().get(member).union.clone();
         for(int i = 0; i < featuresToAdd.length; i++){
             if(featuresToAdd[i] == 1){
                 if(union[i] == 0){
@@ -82,16 +82,9 @@ public class Cluster {
         this.memberSize = memberSize;
     }
 
-    public void setUnion(byte[] union) {
-        this.union = union;
-    }
 
     public ArrayList<Integer> getMembers() {
         return members;
-    }
-
-    public byte[] getUnion() {
-        return union;
     }
 
     public int getMemberSize() {
